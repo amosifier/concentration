@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aesthetic Focus</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --border-color: #333333;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 20px;
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        button {
+            background: none;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* Sections */
+        section {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        section.active {
+            display: flex;
+        }
+
+        /* Timer - Big */
+        #timer-container {
+            position: relative;
+        }
+
+        #timer-display {
+            font-size: 10rem;
+            font-weight: bold;
+            margin: 10px 0;
+            transition: text-shadow 0.3s;
+        }
+
+        #timer-label {
+            font-size: 1.5rem;
+            letter-spacing: 10px;
+            opacity: 0.7;
+        }
+
+        /* NOTICEABLE TRANSITION ANIMATION */
+        .mode-change-anim {
+            animation: springPop 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes springPop {
+            0% { transform: scale(0.8); opacity: 0; filter: blur(5px); }
+            50% { transform: scale(1.1); opacity: 1; filter: blur(0px); text-shadow: 0 0 20px #fff; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Clock & Date - At Bottom */
+        #clock-container {
+            margin-top: 60px;
+        }
+
+        #clock {
+            font-size: 3rem;
+            margin-bottom: 0;
+        }
+
+        #date {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .controls, .settings {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .settings input {
+            background: black;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 5px;
+            width: 50px;
+            text-align: center;
+        }
+
+        /* Goals */
+        .goal-container {
+            width: 100%;
+        }
+
+        #goal-input {
+            width: 70%;
+            background: none;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .goal-list {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+        }
+
+        .goal-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Quote Section */
+        #quote-text {
+            font-size: 1.4rem;
+            font-style: italic;
+            line-height: 1.6;
+            max-width: 500px;
+        }
+
+        #quote-author {
+            margin-top: 20px;
+            opacity: 0.6;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <button onclick="showSection('timer-sec')">Focus</button>
+        <button onclick="showSection('goal-sec')">Goals</button>
+        <button onclick="showSection('quote-sec')">Inspire</button>
+    </nav>
+
+    <section id="timer-sec" class="active">
+        <div id="timer-container">
+            <div id="timer-label">WORK</div>
+            <div id="timer-display">25:00</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="toggleTimer()" id="start-btn">Start</button>
+            <button onclick="resetTimer()">Reset</button>
+        </div>
+
+        <div class="settings">
+            <label>Work: <input type="number" id="work-min" value="25"></label>
+            <label>Rest: <input type="number" id="rest-min" value="5"></label>
+        </div>
+
+        <div id="clock-container">
+            <div id="clock">00:00:00</div>
+            <div id="date">Monday, 1, January, 2024</div>
+        </div>
+    </section>
+
+    <section id="goal-sec">
+        <h2>Weekly Goals</h2>
+        <div class="goal-container">
+            <input type="text" id="goal-input" placeholder="Enter a new goal...">
+            <button onclick="addGoal()">Add</button>
+            <ul id="goal-list" class="goal-list"></ul>
+        </div>
+    </section>
+
+    <section id="quote-sec">
+        <div id="quote-container">
+            <p id="quote-text">"Loading your daily wisdom..."</p>
+            <p id="quote-author"></p>
+        </div>
+        <button onclick="fetchQuote()" style="margin-top: 30px;">New Quote</button>
+    </section>
+
+    <script>
+        function showSection(id) {
+            document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-GB', { hour12: false });
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const dateStr = `${days[now.getDay()]}, ${now.getDate()}, ${months[now.getMonth()]}, ${now.getFullYear()}`;
+            document.getElementById('clock').textContent = timeStr;
+            document.getElementById('date').textContent = dateStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        let timer;
+        let timeLeft = 25 * 60;
+        let isRunning = false;
+        let isWorkMode = true;
+
+        async function playTripleBeep() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            for (let i = 0; i < 3; i++) {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+                await new Promise(r => setTimeout(r, 600));
+            }
+        }
+
+        function triggerAnimation() {
+            const el = document.getElementById('timer-container');
+            el.classList.remove('mode-change-anim');
+            void el.offsetWidth; // Force reflow
+            el.classList.add('mode-change-anim');
+        }
+
+        function toggleTimer() {
+            if (isRunning) {
+                clearInterval(timer);
+                document.getElementById('start-btn').textContent = 'Start';
+            } else {
+                timer = setInterval(updateTimer, 1000);
+                document.getElementById('start-btn').textContent = 'Pause';
+            }
+            isRunning = !isRunning;
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            isWorkMode = true;
+            timeLeft = document.getElementById('work-min').value * 60;
+            updateTimerDisplay();
+            document.getElementById('start-btn').textContent = 'Start';
+            document.getElementById('timer-label').textContent = 'WORK';
+            triggerAnimation();
+        }
+
+        function updateTimer() {
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                isRunning = false;
+                playTripleBeep();
+                isWorkMode = !isWorkMode;
+                timeLeft = (isWorkMode ? document.getElementById('work-min').value : document.getElementById('rest-min').value) * 60;
+                document.getElementById('timer-label').textContent = isWorkMode ? 'WORK' : 'REST';
+                document.getElementById('start-btn').textContent = 'Start';
+                updateTimerDisplay();
+                triggerAnimation();
+                return;
+            }
+            timeLeft--;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('timer-display').textContent = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        let goals = JSON.parse(localStorage.getItem('pomodoro-goals')) || [];
+        function renderGoals() {
+            const list = document.getElementById('goal-list');
+            list.innerHTML = '';
+            goals.forEach((goal, index) => {
+                const li = document.createElement('li');
+                li.className = 'goal-item';
+                li.innerHTML = `<span contenteditable="true" onblur="editGoal(${index}, this.innerText)">${goal}</span><button onclick="deleteGoal(${index})">X</button>`;
+                list.appendChild(li);
+            });
+            localStorage.setItem('pomodoro-goals', JSON.stringify(goals));
+        }
+
+        function addGoal() {
+            const input = document.getElementById('goal-input');
+            if (input.value.trim()) {
+                goals.push(input.value.trim());
+                input.value = '';
+                renderGoals();
+            }
+        }
+
+        function editGoal(index, newText) {
+            goals[index] = newText;
+            localStorage.setItem('pomodoro-goals', JSON.stringify(goals));
+        }
+
+        function deleteGoal(index) {
+            goals.splice(index, 1);
+            renderGoals();
+        }
+
+        // INFINITE API QUOTES - Focused on Motivation, Psychology, Wisdom
+        async function fetchQuote() {
+            try {
+                // Fetching from a massive quote library API
+                const response = await fetch('https://dummyjson.com/quotes/random');
+                const data = await response.json();
+                
+                // If the quote is too short or doesn't fit the "life/psych/goal" vibe, we can fetch again,
+                // but dummyjson provides a high volume of wisdom/motivation.
+                document.getElementById('quote-text').textContent = `"${data.quote}"`;
+                document.getElementById('quote-author').textContent = `- ${data.author}`;
+            } catch (err) {
+                document.getElementById('quote-text').textContent = "Discipline is the bridge between goals and accomplishment.";
+                document.getElementById('quote-author').textContent = "- Jim Rohn";
+            }
+        }
+
+        renderGoals();
+        fetchQuote();
+    </script>
+</body>
+</html>

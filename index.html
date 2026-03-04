@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Focus</title>
+    <title>Concentration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Big+Shoulders+Display:wght@800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #000000;
@@ -14,7 +15,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Nunito', 'Courier New', Courier, monospace;
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -40,6 +41,7 @@
             padding: 8px 16px;
             cursor: pointer;
             font-family: inherit;
+            border-radius: 999px;
             transition: all 0.3s;
         }
 
@@ -56,10 +58,19 @@
             text-align: center;
             width: 90%;
             max-width: 600px;
+            opacity: 0;
+            transform: translateY(18px) scale(0.98);
+            transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         section.active {
             display: flex;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
 
         /* Timer - Big */
@@ -69,9 +80,11 @@
 
         #timer-display {
             font-size: 10rem;
-            font-weight: bold;
+            font-weight: 800;
+            font-family: 'Big Shoulders Display', sans-serif;
             margin: 10px 0;
             transition: text-shadow 0.3s;
+            letter-spacing: 2px;
         }
 
         #timer-label {
@@ -98,6 +111,7 @@
 
         #clock {
             font-size: 3rem;
+            font-weight: 700;
             margin-bottom: 0;
         }
 
@@ -119,6 +133,8 @@
             padding: 5px;
             width: 50px;
             text-align: center;
+            border-radius: 8px;
+            font-family: inherit;
         }
 
         /* Goals */
@@ -131,8 +147,10 @@
             background: none;
             border: 1px solid var(--border-color);
             color: white;
-            padding: 10px;
+            padding: 10px 16px;
             margin-bottom: 20px;
+            border-radius: 999px;
+            font-family: inherit;
         }
 
         .goal-list {
@@ -212,9 +230,30 @@
 
     <script>
         function showSection(id) {
-            document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+            const current = document.querySelector('section.active');
+            const next = document.getElementById(id);
+            if (current === next) return;
+
+            // Fade out current
+            current.classList.remove('visible');
+            setTimeout(() => {
+                current.classList.remove('active');
+                // Fade in next
+                next.classList.add('active');
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        next.classList.add('visible');
+                    });
+                });
+            }, 300);
         }
+
+        // Trigger initial visible state
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                document.querySelector('section.active').classList.add('visible');
+            });
+        });
 
         function updateClock() {
             const now = new Date();
